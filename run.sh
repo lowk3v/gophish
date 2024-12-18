@@ -1,3 +1,8 @@
+
+if [ "$1" == "build" ]; then
+  docker build -t custom .
+fi
+
 docker run \
 	-p 127.0.0.1:6655:3333 \
 	-p 127.0.0.1:6666:80 \
