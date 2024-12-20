@@ -173,6 +173,7 @@ func PutTemplate(t *Template) error {
 		log.Error(err)
 		return err
 	}
+	log.Debugf("Envelope Sender: %s", t.EnvelopeSender)
 	return nil
 }
 

@@ -14,7 +14,8 @@ FROM golang:1.15.2 AS build-golang
 
 WORKDIR /go/src/github.com/lowk3v/gophish
 COPY . .
-RUN go get -v && go build -v
+RUN go get -v
+RUN go build -v
 
 
 # Runtime container
@@ -28,7 +29,7 @@ RUN apt-get update && \
 	rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 WORKDIR /opt/gophish
-COPY --from=build-golang /go/src/github.com/gophish/gophish/ ./
+COPY --from=build-golang /go/src/github.com/lowk3v/gophish/ ./
 COPY --from=build-js /build/static/js/dist/ ./static/js/dist/
 COPY --from=build-js /build/static/css/dist/ ./static/css/dist/
 COPY --from=build-golang /go/src/github.com/lowk3v/gophish/config.json ./
