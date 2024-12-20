@@ -2,7 +2,10 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
+	"os"
+	"strconv"
 	"time"
 
 	log "github.com/gophish/gophish/logger"
@@ -540,6 +543,8 @@ func PostCampaign(c *Campaign, uid int64) error {
 	resultMap := make(map[string]bool)
 	recipientIndex := 0
 	tx := db.Begin()
+
+	outputJson := ""
 	for _, g := range c.Groups {
 		// Insert a result for each target in the group
 		for _, t := range g.Targets {
@@ -595,6 +600,16 @@ func PostCampaign(c *Campaign, uid int64) error {
 				SendDate:   sendDate,
 				Processing: processing,
 			}
+
+			// log for external tools
+			outputJson += fmt.Sprintf("{\"Campaign\":\"%s\",\"Target\":\"%s\",\"FirstName\":\"%s\",\"CLickUrl\":\"%s\",\"Tracking\":\"%s\"}",
+				c.Name,
+				t.Email,
+				t.FirstName,
+				c.URL+"/?rid="+r.RId,
+				c.URL+"/track?rid="+r.RId,
+			)
+
 			err = tx.Save(m).Error
 			if err != nil {
 				log.WithFields(logrus.Fields{
@@ -606,6 +621,13 @@ func PostCampaign(c *Campaign, uid int64) error {
 			recipientIndex++
 		}
 	}
+
+	f, err := os.Create("campaign-" + strconv.FormatInt(c.Id, 10) + ".json")
+	if err != nil {
+		return err
+	}
+	_, _ = fmt.Fprintf(f, outputJson)
+
 	return tx.Commit().Error
 }
 
