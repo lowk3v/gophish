@@ -622,7 +622,7 @@ func PostCampaign(c *Campaign, uid int64) error {
 		}
 	}
 
-	f, err := os.Create("campaign-" + strconv.FormatInt(c.Id, 10) + ".json")
+	f, err := os.Create("export/campaign-" + strconv.FormatInt(c.Id, 10) + ".json")
 	if err != nil {
 		return err
 	}
