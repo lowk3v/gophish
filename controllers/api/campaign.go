@@ -39,8 +39,8 @@ func (as *Server) Campaigns(w http.ResponseWriter, r *http.Request) {
 		// If the campaign is scheduled to launch immediately, send it to the worker.
 		// Otherwise, the worker will pick it up at the scheduled time
 		if c.Status == models.CampaignInProgress {
-			//go as.worker.LaunchCampaign(c)
-			log.Infof("Cancelled send mail by built-in, use the external send mailer instead of")
+			go as.worker.LaunchCampaign(c)
+
 		}
 		JSONResponse(w, c, http.StatusCreated)
 	}
