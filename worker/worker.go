@@ -12,7 +12,7 @@ import (
 
 // Worker is an interface that defines the operations needed for a background worker
 type Worker interface {
-	Start()
+	Start(ctx context.Context)
 	LaunchCampaign(c models.Campaign)
 	SendTestEmail(s *models.EmailRequest) error
 }
@@ -101,9 +101,9 @@ func (w *DefaultWorker) processCampaigns(t time.Time) error {
 
 // Start launches the worker to poll the database every minute for any pending maillogs
 // that need to be processed.
-func (w *DefaultWorker) Start() {
+func (w *DefaultWorker) Start(ctx context.Context) {
 	log.Info("Background Worker Started Successfully - Waiting for Campaigns")
-	go w.mailer.Start(context.Background())
+	go w.mailer.Start(ctx)
 	for t := range time.Tick(1 * time.Minute) {
 		err := w.processCampaigns(t)
 		if err != nil {

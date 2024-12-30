@@ -94,7 +94,13 @@ func NewAdminServer(config config.AdminServer, options ...AdminServerOption) *Ad
 // Start launches the admin server, listening on the configured address.
 func (as *AdminServer) Start() {
 	if as.worker != nil {
-		go as.worker.Start()
+		var ctx_ context.Context
+		if as.config.EnableGoMail {
+			ctx_ = context.WithValue(context.Background(), "enableGoMail", true)
+		} else {
+			ctx_ = context.WithValue(context.Background(), "enableGoMail", false)
+		}
+		go as.worker.Start(ctx_)
 	}
 	if as.config.UseTLS {
 		// Only support TLS 1.2 and above - ref #1691, #1689
