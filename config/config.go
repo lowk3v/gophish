@@ -16,6 +16,7 @@ type AdminServer struct {
 	CSRFKey              string   `json:"csrf_key"`
 	AllowedInternalHosts []string `json:"allowed_internal_hosts"`
 	TrustedOrigins       []string `json:"trusted_origins"`
+	EnableGoMail         bool     `json:"enable_go_mail"`
 }
 
 // PhishServer represents the Phish server configuration details

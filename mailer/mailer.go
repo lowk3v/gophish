@@ -7,6 +7,7 @@ import (
 	log "github.com/gophish/gophish/logger"
 	"github.com/sirupsen/logrus"
 	"io"
+	"net/textproto"
 )
 
 // MaxReconnectAttempts is the maximum number of times we should reconnect to a server
@@ -145,7 +146,7 @@ func sendMail(ctx context.Context, dialer Dialer, ms []Mail) {
 	}
 	defer sender.Close()
 	message := gomail.NewMessage()
-	for _, m := range ms {
+	for i, m := range ms {
 		select {
 		case <-ctx.Done():
 			return
@@ -166,62 +167,62 @@ func sendMail(ctx context.Context, dialer Dialer, ms []Mail) {
 			continue
 		}
 
-		// Disable send mail; Replace with external sender
-
-		//err = gomail.SendCustomFrom(sender, smtp_from, message)
-		//if err != nil {
-		//	if te, ok := err.(*textproto.Error); ok {
-		//		switch {
-		//		// If it's a temporary error, we should backoff and try again later.
-		//		// We'll reset the connection so future messages don't incur a
-		//		// different error (see https://github.com/gophish/gophish/issues/787).
-		//		case te.Code >= 400 && te.Code <= 499:
-		//			log.WithFields(logrus.Fields{
-		//				"code":  te.Code,
-		//				"email": message.GetHeader("To")[0],
-		//			}).Warn(err)
-		//			m.Backoff(err)
-		//			sender.Reset()
-		//			continue
-		//		// Otherwise, if it's a permanent error, we shouldn't backoff this message,
-		//		// since the RFC specifies that running the same commands won't work next time.
-		//		// We should reset our sender and error this message out.
-		//		case te.Code >= 500 && te.Code <= 599:
-		//			log.WithFields(logrus.Fields{
-		//				"code":  te.Code,
-		//				"email": message.GetHeader("To")[0],
-		//			}).Warn(err)
-		//			m.Error(err)
-		//			sender.Reset()
-		//			continue
-		//		// If something else happened, let's just error out and reset the
-		//		// sender
-		//		default:
-		//			log.WithFields(logrus.Fields{
-		//				"code":  "unknown",
-		//				"email": message.GetHeader("To")[0],
-		//			}).Warn(err)
-		//			m.Error(err)
-		//			sender.Reset()
-		//			continue
-		//		}
-		//	} else {
-		//		// This likely indicates that something happened to the underlying
-		//		// connection. We'll try to reconnect and, if that fails, we'll
-		//		// error out the remaining emails.
-		//		log.WithFields(logrus.Fields{
-		//			"email": message.GetHeader("To")[0],
-		//		}).Warn(err)
-		//		origErr := err
-		//		sender, err = dialHost(ctx, dialer)
-		//		if err != nil {
-		//			errorMail(err, ms[i:])
-		//			break
-		//		}
-		//		m.Backoff(origErr)
-		//		continue
-		//	}
-		//}
+		if ctx.Value("enableGoMail").(bool) {
+			err = gomail.SendCustomFrom(sender, smtp_from, message)
+		}
+		if err != nil {
+			if te, ok := err.(*textproto.Error); ok {
+				switch {
+				// If it's a temporary error, we should backoff and try again later.
+				// We'll reset the connection so future messages don't incur a
+				// different error (see https://github.com/gophish/gophish/issues/787).
+				case te.Code >= 400 && te.Code <= 499:
+					log.WithFields(logrus.Fields{
+						"code":  te.Code,
+						"email": message.GetHeader("To")[0],
+					}).Warn(err)
+					m.Backoff(err)
+					sender.Reset()
+					continue
+				// Otherwise, if it's a permanent error, we shouldn't backoff this message,
+				// since the RFC specifies that running the same commands won't work next time.
+				// We should reset our sender and error this message out.
+				case te.Code >= 500 && te.Code <= 599:
+					log.WithFields(logrus.Fields{
+						"code":  te.Code,
+						"email": message.GetHeader("To")[0],
+					}).Warn(err)
+					m.Error(err)
+					sender.Reset()
+					continue
+				// If something else happened, let's just error out and reset the
+				// sender
+				default:
+					log.WithFields(logrus.Fields{
+						"code":  "unknown",
+						"email": message.GetHeader("To")[0],
+					}).Warn(err)
+					m.Error(err)
+					sender.Reset()
+					continue
+				}
+			} else {
+				// This likely indicates that something happened to the underlying
+				// connection. We'll try to reconnect and, if that fails, we'll
+				// error out the remaining emails.
+				log.WithFields(logrus.Fields{
+					"email": message.GetHeader("To")[0],
+				}).Warn(err)
+				origErr := err
+				sender, err = dialHost(ctx, dialer)
+				if err != nil {
+					errorMail(err, ms[i:])
+					break
+				}
+				m.Backoff(origErr)
+				continue
+			}
+		}
 		log.WithFields(logrus.Fields{
 			"smtp_from":     smtp_from,
 			"envelope_from": message.GetHeader("From")[0],
