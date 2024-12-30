@@ -72,7 +72,7 @@ func WithWorker(w worker.Worker) AdminServerOption {
 // NewAdminServer returns a new instance of the AdminServer with the
 // provided config and options applied.
 func NewAdminServer(config config.AdminServer, options ...AdminServerOption) *AdminServer {
-	defaultWorker, _ := worker.New(config)
+	defaultWorker, _ := worker.New()
 	defaultServer := &http.Server{
 		ReadTimeout: 10 * time.Second,
 		Addr:        config.ListenURL,
@@ -111,7 +111,7 @@ func (as *AdminServer) Start() {
 	log.Fatal(as.server.ListenAndServe())
 }
 
-// Shutdown attempts to gracefully shutdown the server.
+// Shutdown attempts to gracefully shut down the server.
 func (as *AdminServer) Shutdown() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()

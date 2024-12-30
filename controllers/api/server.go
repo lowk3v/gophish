@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/gophish/gophish/config"
 	"net/http"
 
 	mid "github.com/gophish/gophish/middleware"
@@ -27,7 +26,7 @@ type Server struct {
 // NewServer returns a new instance of the API handler with the provided
 // options applied.
 func NewServer(options ...ServerOption) *Server {
-	defaultWorker, _ := worker.New(config.AdminServer{})
+	defaultWorker, _ := worker.New()
 	defaultLimiter := ratelimit.NewPostLimiter()
 	as := &Server{
 		worker:  defaultWorker,

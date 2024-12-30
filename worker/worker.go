@@ -2,7 +2,6 @@ package worker
 
 import (
 	"context"
-	"github.com/gophish/gophish/config"
 	"time"
 
 	log "github.com/gophish/gophish/logger"
@@ -20,16 +19,14 @@ type Worker interface {
 
 // DefaultWorker is the background worker that handles watching for new campaigns and sending emails appropriately.
 type DefaultWorker struct {
-	mailer       mailer.Mailer
-	enableGoMail bool
+	mailer mailer.Mailer
 }
 
 // New creates a new worker object to handle the creation of campaigns
-func New(config config.AdminServer, options ...func(Worker) error) (Worker, error) {
+func New(options ...func(Worker) error) (Worker, error) {
 	defaultMailer := mailer.NewMailWorker()
 	w := &DefaultWorker{
-		mailer:       defaultMailer,
-		enableGoMail: config.EnableGoMail,
+		mailer: defaultMailer,
 	}
 	for _, opt := range options {
 		if err := opt(w); err != nil {
@@ -106,7 +103,6 @@ func (w *DefaultWorker) processCampaigns(t time.Time) error {
 // that need to be processed.
 func (w *DefaultWorker) Start() {
 	log.Info("Background Worker Started Successfully - Waiting for Campaigns")
-	context.WithValue(context.Background(), "enableGoMail", w.enableGoMail)
 	go w.mailer.Start(context.Background())
 	for t := range time.Tick(1 * time.Minute) {
 		err := w.processCampaigns(t)

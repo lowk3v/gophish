@@ -26,6 +26,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -72,6 +73,8 @@ func main() {
 
 	// Load the config
 	conf, err := config.LoadConfig(*configPath)
+	context.WithValue(context.Background(), "enableGoMail", conf.AdminConf.EnableGoMail)
+
 	// Just warn if a contact address hasn't been configured
 	if err != nil {
 		log.Fatal(err)
